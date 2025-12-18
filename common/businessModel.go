@@ -4,9 +4,9 @@ package common
 
 type BusinessCode int
 type Result struct {
-	Code BusinessCode
-	Msg  string
-	Data any
+	Code BusinessCode `json:"code"`
+	Msg  string       `json:"msg"`
+	Data any          `json:"data"`
 }
 
 func (r *Result) Success(data any) *Result {
