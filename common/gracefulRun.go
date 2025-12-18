@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// Run 优雅关闭
 func Run(engin *gin.Engine, addr string, moduleName string) {
 
 	srv := &http.Server{
@@ -19,6 +20,7 @@ func Run(engin *gin.Engine, addr string, moduleName string) {
 	}
 
 	go func() {
+		log.Printf("%s server running %s\n", moduleName, addr)
 		// service connections
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s, ERROR: %v\n", moduleName, err)

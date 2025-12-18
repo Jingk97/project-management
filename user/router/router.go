@@ -5,31 +5,18 @@ import (
 )
 
 type Router interface {
-	Route(engin *gin.Engine)
-}
-
-type RegisterRouter struct {
-}
-
-//func NewRegisterRouter() *RegisterRouter {
-//	return &RegisterRouter{}
-//}
-
-func (r *RegisterRouter) Route(router Router, engin *gin.Engine) {
-	router.Route(engin)
+	Register(engin *gin.RouterGroup)
 }
 
 var routes []Router
 
-func Register(ro ...Router) {
-	routes = append(routes, ro...)
+func AddRoute(r Router) {
+	routes = append(routes, r)
 }
 
 func InitRouter(ginEngine *gin.Engine) {
-	//r := NewRegisterRouter()
-	//r.Route(&user.RouteUser{}, ginEngine)
-
+	apiv1 := ginEngine.Group("/api/v1")
 	for _, route := range routes {
-		route.Route(ginEngine)
+		route.Register(apiv1)
 	}
 }
