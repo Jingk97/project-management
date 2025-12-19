@@ -9,7 +9,7 @@ import (
 func init() {
 	log.Println("login路由已经添加到注册路由表中")
 	router.AddRoute(&RouteUser{
-		handler: &HandlerLogin{},
+		handler: NewHandlerLogin(),
 	})
 }
 
@@ -17,6 +17,7 @@ type RouteUser struct {
 	handler *HandlerLogin
 }
 
+// Register RouteUser结构体在init就已经实体化
 func (r *RouteUser) Register(engine *gin.RouterGroup) {
 	userGroup := engine.Group("/login")
 	{

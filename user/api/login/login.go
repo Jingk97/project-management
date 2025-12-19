@@ -1,7 +1,10 @@
 package login
 
 import (
+	"context"
 	common "github.com/Jingk97/project-management-common"
+	"github.com/Jingk97/project-management-user/model"
+	"github.com/Jingk97/project-management-user/repo"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -9,9 +12,17 @@ import (
 )
 
 type HandlerLogin struct {
+	cache repo.Cache
 }
 
-func (*HandlerLogin) getCaptcha(ctx *gin.Context) {
+// NewHandlerLogin 还是要有这个new函数，结构体后续变成有状态后，上一层级需要将有状态的接口实体化
+func NewHandlerLogin() *HandlerLogin {
+	return &HandlerLogin{
+		cache: model.RedisClient,
+	}
+}
+
+func (h *HandlerLogin) getCaptcha(ctx *gin.Context) {
 	resp := common.Result{}
 	// 获取请求参数（主要是手机号）
 	mobileNum := ctx.PostForm("mobile")
@@ -35,6 +46,7 @@ func (*HandlerLogin) getCaptcha(ctx *gin.Context) {
 		return
 	}
 	// 发送验证码
+	
 	go func() {
 		time.Sleep(400 * time.Millisecond)
 		log.Println("调用短信发送成功；code：", code)
