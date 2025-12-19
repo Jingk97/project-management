@@ -38,6 +38,14 @@ func (*HandlerLogin) getCaptcha(ctx *gin.Context) {
 	go func() {
 		time.Sleep(400 * time.Millisecond)
 		log.Println("调用短信发送成功；code：", code)
+		ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
+		defer cancel()
+		err := h.cache.Put(ctx, "REGISTER_"+mobileNum, code, 15*time.Minute)
+		if err != nil {
+			log.Println("验证码入redis出错：", err)
+			return
+		}
+		log.Println("已经将code入redis缓存", "REGISTER_"+mobileNum, ": ", code)
 	}()
 	// 存入redis
 	// 返回结果
