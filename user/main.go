@@ -11,5 +11,5 @@ func main() {
 	r := gin.Default()
 	// 初始化注册路由
 	router.InitRouter(r)
-	common.Run(r, "127.0.0.1:8080", "project-user")
+	common.Run(r, "127.0.0.1:8080", "project-login")
 }
