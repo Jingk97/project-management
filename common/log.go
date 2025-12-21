@@ -33,24 +33,30 @@ func InitLogger(cfg *LogConfig) (err error) {
 	writeSyncerWarn := getLogWriter(cfg.WarnLogFilename, cfg.MaxSize, cfg.MaxBackups, cfg.MaxAge)
 	writeSyncerError := getLogWriter(cfg.ErrorLogFilename, cfg.MaxSize, cfg.MaxBackups, cfg.MaxAge)
 	encoder := getEncoder()
-	//文件输出
-	infoCore := zapcore.NewCore(encoder, writeSyncerInfo, zapcore.DebugLevel)
-	warnCore := zapcore.NewCore(encoder, writeSyncerWarn, zapcore.WarnLevel)
-	debugCore := zapcore.NewCore(encoder, writeSyncerError, zapcore.ErrorLevel)
+	//文件输出(此种写法会将日志重复打印)
+	//infoCore := zapcore.NewCore(encoder, writeSyncerInfo, zapcore.DebugLevel)
+	//warnCore := zapcore.NewCore(encoder, writeSyncerWarn, zapcore.WarnLevel)
+	//debugCore := zapcore.NewCore(encoder, writeSyncerError, zapcore.ErrorLevel)
+	// 文件输出（将info放在info文件，将warn放在warn日志文件，修正重复打印）
+	infoPriority := zap.LevelEnablerFunc(func(l zapcore.Level) bool {
+		return l < zapcore.WarnLevel
+	})
+
+	warnPriority := zap.LevelEnablerFunc(func(l zapcore.Level) bool {
+		return l >= zapcore.WarnLevel && l < zapcore.ErrorLevel
+	})
+
+	errorPriority := zap.LevelEnablerFunc(func(l zapcore.Level) bool {
+		return l >= zapcore.ErrorLevel
+	})
+	infoCore := zapcore.NewCore(encoder, writeSyncerInfo, infoPriority)
+	warnCore := zapcore.NewCore(encoder, writeSyncerWarn, warnPriority)
+	errorCore := zapcore.NewCore(encoder, writeSyncerError, errorPriority)
 	//标准输出
-	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
-	var std zapcore.Core
-	switch cfg.Level {
-	case "dev":
-		std = zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel)
-	case "uat":
-		std = zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.WarnLevel)
-	case "prod":
-		std = zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.ErrorLevel)
-	default:
-		std = zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel)
-	}
-	core := zapcore.NewTee(debugCore, infoCore, warnCore, std)
+	//consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+	consoleEncoder := getEncoder()
+	std := zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel)
+	core := zapcore.NewTee(errorCore, infoCore, warnCore, std)
 	Logger = zap.New(core, zap.AddCaller())
 	zap.ReplaceGlobals(Logger) // 替换zap包中全局的logger实例，后续在其他包中只需使用zap.L()调用即可
 	return
@@ -91,7 +97,7 @@ func GinLogger() gin.HandlerFunc {
 			zap.String("method", c.Request.Method),
 			zap.String("path", path),
 			zap.String("query", query),
-			zap.String("ip", c.ClientIP()),
+			zap.String("client-ip", c.ClientIP()),
 			zap.String("user-agent", c.Request.UserAgent()),
 			zap.String("errors", c.Errors.ByType(gin.ErrorTypePrivate).String()),
 			zap.Duration("cost", cost),

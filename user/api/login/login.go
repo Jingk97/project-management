@@ -2,10 +2,8 @@ package login
 
 import (
 	"context"
-	"fmt"
 	common "github.com/Jingk97/project-management-common"
 	"github.com/Jingk97/project-management-user/model"
-	"github.com/Jingk97/project-management-user/repo"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -13,20 +11,17 @@ import (
 )
 
 type HandlerLogin struct {
-	cache repo.Cache
+	cache *model.RedisCache
 }
 
-// NewHandlerLogin 还是要有这个new函数，结构体后续变成有状态后，上一层级需要将有状态的接口实体化
-func NewHandlerLogin() *HandlerLogin {
-	if model.RedisClient == nil {
-		fmt.Println("redis client is nil")
-	}
+// NewLoginHandler 还是要有这个new函数，结构体后续变成有状态后，上一层级需要将有状态的接口实体化
+func NewLoginHandler(redis *model.RedisCache) *HandlerLogin {
 	return &HandlerLogin{
-		cache: model.RedisClient,
+		cache: redis,
 	}
 }
 
-func (h *HandlerLogin) getCaptcha(ctx *gin.Context) {
+func (h *HandlerLogin) GetCaptcha(ctx *gin.Context) {
 	resp := common.Result{}
 	// 获取请求参数（主要是手机号）
 	mobileNum := ctx.PostForm("mobile")

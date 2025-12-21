@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	common "github.com/Jingk97/project-management-common"
-	_ "github.com/Jingk97/project-management-user/api"
+	"github.com/Jingk97/project-management-user/api"
 	"github.com/Jingk97/project-management-user/config"
 	"github.com/Jingk97/project-management-user/router"
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,8 @@ func main() {
 	cfg := initServer(configFile)
 	r.Use(common.GinLogger(), common.GinRecovery(true))
 	// 初始化注册路由
-	router.InitRouter(r)
+	api.RegisterApis()
+	router.InitRouters(r)
 	common.Run(r, fmt.Sprintf("%s:%d", cfg.Addr, cfg.Port), cfg.ServerName)
 }
 
