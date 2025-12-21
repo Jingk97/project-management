@@ -2,11 +2,12 @@ package login
 
 import (
 	"context"
+	"fmt"
 	common "github.com/Jingk97/project-management-common"
 	"github.com/Jingk97/project-management-user/model"
 	"github.com/Jingk97/project-management-user/repo"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -17,6 +18,9 @@ type HandlerLogin struct {
 
 // NewHandlerLogin 还是要有这个new函数，结构体后续变成有状态后，上一层级需要将有状态的接口实体化
 func NewHandlerLogin() *HandlerLogin {
+	if model.RedisClient == nil {
+		fmt.Println("redis client is nil")
+	}
 	return &HandlerLogin{
 		cache: model.RedisClient,
 	}
@@ -30,36 +34,35 @@ func (h *HandlerLogin) getCaptcha(ctx *gin.Context) {
 	// 校验手机号是否符合规则
 	if mobileNum == "" {
 		ctx.JSON(http.StatusOK, resp.Fail(common.IllegalPhoneNumber, "Phone Number Miss!"))
-		log.Printf("请求参数，手机号为空")
+		zap.L().Warn("请求参数，手机号为空")
 		return
 	}
 	if !common.IsValidateMobile(mobileNum) {
 		ctx.JSON(http.StatusOK, resp.Fail(common.IllegalPhoneNumber, "Phone Number Illegal!"))
-		log.Printf("请求参数，手机号：%s，无效", mobileNum)
+		zap.L().Warn("用户携带手机号不合法：", zap.String("mobile", mobileNum))
 		return
 	}
 	// 生成验证码（验证码需要协程发送）
 	code, err := common.GenerateCode(6)
 	if err != nil {
-		log.Println(err)
+		zap.L().Warn("验证码生成失败", zap.String("mobile", mobileNum), zap.Error(err))
 		ctx.JSON(http.StatusOK, resp.Fail(common.GenerateCodeWrong, err.Error()))
 		return
 	}
 	// 发送验证码
-	
 	go func() {
 		time.Sleep(400 * time.Millisecond)
-		log.Println("调用短信发送成功；code：", code)
+		zap.L().Info("调用短信发送成功；code：", zap.String("code", code))
 		ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
 		defer cancel()
-		err := h.cache.Put(ctx, "REGISTER_"+mobileNum, code, 15*time.Minute)
+		// 存入redis
+		err = h.cache.Put(ctx, "REGISTER_"+mobileNum, code, 15*time.Minute)
 		if err != nil {
-			log.Println("验证码入redis出错：", err)
+			zap.L().Error("验证码落入redis出错：", zap.String("mobile", mobileNum), zap.Error(err))
 			return
 		}
-		log.Println("已经将code入redis缓存", "REGISTER_"+mobileNum, ": ", code)
+		zap.L().Info("已经将code入redis缓存,REGISTER_", zap.String("mobile", mobileNum), zap.String("code", code))
 	}()
-	// 存入redis
 	// 返回结果
 	ctx.JSON(200, resp.Success(code))
 	return

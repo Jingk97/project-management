@@ -11,4 +11,5 @@ import (
 type Cache interface {
 	Put(ctx context.Context, key, value string, expire time.Duration) error
 	Get(ctx context.Context, key string) (value string, err error)
+	Ping(ctx context.Context) error
 }

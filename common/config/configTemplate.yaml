@@ -1,0 +1,26 @@
+server:
+  serverName: ""
+  mode: "dev"
+  addr: "127.0.0.1"
+  port: 8080
+
+log:
+  infoLogFilename: "./log/info.log"
+  warnLogFilename: "./log/warn.log"
+  errorLogFilename: "./log/error.log"
+  maxSize: 500
+  maxAge: 30
+  maxBackupFiles: 5
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  user: "default"
+  db: 0
+
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  password: ""
+  dbUser: ""

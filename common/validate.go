@@ -12,6 +12,5 @@ func IsValidateMobile(mobile string) bool {
 		return false
 	}
 	mobileRegExp := regexp.MustCompile(mobileRex)
-	//fmt.Println(mobileRegExp.MatchString(mobile))
 	return mobileRegExp.MatchString(mobile)
 }
